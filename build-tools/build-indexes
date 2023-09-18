@@ -4,7 +4,9 @@
 const fs = require("fs");
 const path = require('path');
 const child_process = require("child_process");
-
+const ex = require('./moves.js');
+const pd = require('./pokedex.js');
+const ls = require('./locations.js');
 const rootDir = path.resolve(__dirname, '..');
 process.chdir(rootDir);
 
@@ -13,7 +15,6 @@ if (!fs.existsSync('data/pokemon-showdown')) {
 		cwd: 'data',
 	});
 }
-
 process.stdout.write("Syncing data from Git repository... ");
 child_process.execSync('git pull', {cwd: 'data/pokemon-showdown'});
 child_process.execSync('npm run build', {cwd: 'data/pokemon-showdown'});
@@ -24,7 +25,6 @@ const toID = Dex.toID;
 process.stdout.write("Loading gen 6 data... ");
 Dex.includeData();
 console.log("DONE");
-
 function es3stringify(obj) {
 	const buf = JSON.stringify(obj);
 	return buf.replace(/\"([A-Za-z][A-Za-z0-9]*)\"\:/g, (fullMatch, key) => (
@@ -45,9 +45,9 @@ function requireNoCache(pathSpec) {
 	process.stdout.write("Building `data/search-index.js`... ");
 
 	let index = [];
-
-	index = index.concat(Object.keys(Dex.data.Pokedex).map(x => x + ' pokemon'));
-	index = index.concat(Object.keys(Dex.data.Moves).map(x => x + ' move'));
+	index = index.concat(Object.keys(pd.pokedex).map(x => x + ' pokemon'));
+	index = index.concat(Object.keys(ex.moves).map(x => x + ' move'));
+	index = index.concat(Object.keys(ls.locations).map(x => x + ' location'));
 	index = index.concat(Object.keys(Dex.data.Items).map(x => x + ' item'));
 	index = index.concat(Object.keys(Dex.data.Abilities).map(x => x + ' ability'));
 	index = index.concat(Object.keys(Dex.data.TypeChart).map(x => toID(x) + ' type'));
@@ -207,13 +207,17 @@ function requireNoCache(pathSpec) {
 			index.push('' + toID(name.slice(i2)) + ' ' + type + ' ' + id + ' ' + toID(name.slice(0, i2)).length);
 		}
 	}
-	for (const id in Dex.data.Pokedex) {
-		const name = Dex.data.Pokedex[id].name;
+	for (const id in pd.pokedex) {
+		const name = pd.pokedex[id].name;
 		generateAlias(id, name, 'pokemon');
 	}
-	for (const id in Dex.data.Moves) {
-		const name = Dex.data.Moves[id].name;
+	for (const id in ex.moves) {
+		const name = ex.moves[id].name;
 		generateAlias(id, name, 'move');
+	}
+	for (const id in ls.locations) {
+		const name = ls.locations[id].name;
+		generateAlias(id, name, 'location');
 	}
 	for (const id in Dex.data.Items) {
 		const name = Dex.data.Items[id].name;
@@ -283,11 +287,11 @@ function requireNoCache(pathSpec) {
 
 	let BattleSearchCountIndex = {};
 	for (const type in Dex.data.TypeChart) {
-		BattleSearchCountIndex[type + ' move'] = Object.keys(Dex.data.Moves).filter(id => (Dex.data.Moves[id].type === type)).length;
+		BattleSearchCountIndex[type + ' move'] = Object.keys(ex.moves).filter(id => (ex.moves[id].type === type)).length;
 	}
 
 	for (const type in Dex.data.TypeChart) {
-		BattleSearchCountIndex[type + ' pokemon'] = Object.keys(Dex.data.Pokedex).filter(id => (Dex.data.Pokedex[id].types.indexOf(type) >= 0)).length;
+		BattleSearchCountIndex[type + ' pokemon'] = Object.keys(pd.pokedex).filter(id => (pd.pokedex[id].types.indexOf(type) >= 0)).length;
 	}
 
 	let buf = '// DO NOT EDIT - automatically built with build-tools/build-indexes\n\n';
@@ -299,13 +303,12 @@ function requireNoCache(pathSpec) {
 	buf += 'exports.BattleSearchCountIndex = ' + JSON.stringify(BattleSearchCountIndex) + ';\n\n';
 
 	buf += 'exports.BattleArticleTitles = ' + JSON.stringify(BattleArticleTitles) + ';\n\n';
-
 	fs.writeFileSync('data/search-index.js', buf);
 }
 
 console.log("DONE");
 
-/*********************************************************
+/*********************************************************	
  * Build teambuilder-tables.js
  *********************************************************/
 
@@ -347,7 +350,7 @@ process.stdout.write("Building `data/teambuilder-tables.js`... ");
 			return genStr;
 		})();
 		// process.stdout.write("" + gen + (isDoubles ? " doubles" : "") + "... ");
-		const pokemon = Object.keys(Dex.data.Pokedex);
+		const pokemon = Object.keys(pd.pokedex);
 		pokemon.sort();
 		const tierTable = {};
 		const overrideTier = {};
@@ -471,7 +474,7 @@ process.stdout.write("Building `data/teambuilder-tables.js`... ");
 			}
 		}
 
-		nonstandardMoves.push(...Object.keys(Dex.data.Moves).filter(id => {
+		nonstandardMoves.push(...Object.keys(ex.moves).filter(id => {
 			const move = Dex.mod('gen8dlc1').moves.get(id);
 			const bMove = Dex.mod('gen8').moves.get(id);
 			return bMove.isNonstandard !== move.isNonstandard;
