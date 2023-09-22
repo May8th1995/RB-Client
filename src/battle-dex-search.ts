@@ -12,7 +12,7 @@
  */
 
 type SearchType = (
-	'pokemon' | 'type' | 'tier' | 'move' | 'item' | 'ability' | 'egggroup' | 'category' | 'article'
+	'pokemon' | 'type' | 'tier' | 'move' | 'item' | 'ability' | 'egggroup' | 'category' | 'article' | 'location'
 );
 
 type SearchRow = (
@@ -52,6 +52,7 @@ class DexSearch {
 		egggroup: 7,
 		category: 8,
 		article: 9,
+		location: 10,
 	};
 	static typeName = {
 		pokemon: 'Pok&eacute;mon',
@@ -63,6 +64,7 @@ class DexSearch {
 		egggroup: 'Egg group',
 		category: 'Category',
 		article: 'Article',
+		location: 'Location',
 	};
 	firstPokemonColumn: 'Tier' | 'Number' = 'Number';
 
@@ -93,6 +95,7 @@ class DexSearch {
 		case 'ability': return new BattleAbilitySearch('ability', format, speciesOrSet);
 		case 'type': return new BattleTypeSearch('type', format, speciesOrSet);
 		case 'category': return new BattleCategorySearch('category', format, speciesOrSet);
+		case 'location': return new BattleLocationSearch('location', format, speciesOrSet);
 		}
 		return null;
 	}
@@ -147,7 +150,16 @@ class DexSearch {
 			this.filters.push(entry);
 			this.results = null;
 			return true;
+		} else if (this.typedSearch.searchType === 'location') {
+			if (type === this.sortCol) this.sortCol = null;
+			if (!['pokemon'].includes(type)) return false;
+			if (type === 'pokemon') entry[1] = toID(entry[1]);
+			if (!this.filters) this.filters = [];
+			this.filters.push(entry);
+			this.results = null;
+			return true;
 		}
+		console.log("filter: " + this.typedSearch.searchType);
 		return false;
 	}
 
@@ -189,6 +201,7 @@ class DexSearch {
 	}
 
 	filterLabel(filterType: string) {
+		console.log("filter label");
 		if (this.typedSearch && this.typedSearch.searchType !== filterType) {
 			return 'Filter';
 		}
@@ -297,7 +310,7 @@ class DexSearch {
 
 		// Notes:
 		// - if we have a searchType, that searchType's buffer will be on top
-		let bufs: SearchRow[][] = [[], [], [], [], [], [], [], [], [], []];
+		let bufs: SearchRow[][] = [[], [], [], [], [], [], [], [], [], [], []];
 		let topbufIndex = -1;
 
 		let count = 0;
@@ -350,7 +363,6 @@ class DexSearch {
 				// normal entry
 				if (passType === 'alias') continue;
 			}
-
 			let typeIndex = DexSearch.typeTable[type];
 
 			// For performance, with a query length of 1, we only fill the first bucket
@@ -363,6 +375,8 @@ class DexSearch {
 			if (searchType === 'move' && ((typeIndex !== 8 && typeIndex > 4) || typeIndex === 3)) continue;
 			// For move queries in the teambuilder, don't accept pokemon as filters
 			if (searchType === 'move' && illegal && typeIndex === 1) continue;
+			// For move queries in the teambuilder, only accept pokemon as filters
+			if (searchType === 'location' && illegal && typeIndex != 1) continue;
 			// For ability/item queries, don't accept anything else as a filter
 			if ((searchType === 'ability' || searchType === 'item') && typeIndex !== searchTypeIndex) continue;
 			// Query was a type name followed 'type'; only show types
@@ -402,7 +416,6 @@ class DexSearch {
 			if (topbufIndex < 0 && searchTypeIndex < 2 && passType === 'alias' && !bufs[1].length && bufs[2].length) {
 				topbufIndex = 2;
 			}
-
 			if (illegal && typeIndex === searchTypeIndex) {
 				// Always show illegal results under legal results.
 				// This is done by putting legal results (and the type header)
@@ -661,7 +674,9 @@ abstract class BattleTypedSearch<T extends SearchType> {
 		if (!this.baseIllegalResults) {
 			const legalityFilter: {[id: string]: 1} = {};
 			for (const [resultType, value] of this.baseResults) {
-				if (resultType === this.searchType) legalityFilter[value] = 1;
+				if (resultType === this.searchType) {
+					legalityFilter[value] = 1;
+				}
 			}
 			this.baseIllegalResults = [];
 			this.illegalReasons = {};
@@ -750,6 +765,48 @@ abstract class BattleTypedSearch<T extends SearchType> {
 		if (next) return toID(next);
 
 		return '' as ID;
+	}
+	protected isHere(speciesid : ID, location: any){
+		if (typeof location.landslot1 !== 'undefined') {
+			if (location.landslot1 === speciesid) return true;
+			if (location.landslot2 === speciesid) return true;
+			if (location.landslot3 === speciesid) return true;
+			if (location.landslot4 === speciesid) return true;
+			if (location.landslot5 === speciesid) return true;
+			if (location.landslot6 === speciesid) return true;
+			if (location.landslot7 === speciesid) return true;
+			if (location.landslot8 === speciesid) return true;
+			if (location.landslot9 === speciesid) return true;
+			if (location.landslot10 === speciesid) return true;
+			if (location.landslot11 === speciesid) return true;
+			if (location.landslot12 === speciesid) return true;
+		}
+		if (typeof location.fishslot1 !== 'undefined') {
+			if (location.fishslot1 === speciesid) return true;
+			if (location.fishslot2 === speciesid) return true;
+			if (location.fishslot3 === speciesid) return true;
+			if (location.fishslot4 === speciesid) return true;
+			if (location.fishslot5 === speciesid) return true;
+			if (location.fishslot6 === speciesid) return true;
+			if (location.fishslot7 === speciesid) return true;
+			if (location.fishslot8 === speciesid) return true;
+			if (location.fishslot9 === speciesid) return true;
+			if (location.fishslot10 === speciesid) return true;
+		}
+		if (typeof location.waterslot1 !== 'undefined') {
+			if (location.waterslot1 === speciesid) return true;
+			if (location.waterslot2 === speciesid) return true;
+			if (location.waterslot3 === speciesid) return true;
+			if (location.waterslot4 === speciesid) return true;
+			if (location.waterslot5 === speciesid) return true;
+		}
+		if (typeof location.rockslot1 !== 'undefined') {
+			if (location.rockslot1 === speciesid) return true;
+			if (location.rockslot2 === speciesid) return true;
+			if (location.rockslot3 === speciesid) return true;
+			if (location.rockslot4 === speciesid) return true;
+			if (location.rockslot5 === speciesid) return true;
+		}
 	}
 	protected canLearn(speciesid: ID, moveid: ID) {
 		const move = this.dex.moves.get(moveid);
@@ -1213,6 +1270,475 @@ class BattleItemSearch extends BattleTypedSearch<'item'> {
 		return true;
 	}
 	sort(results: SearchRow[], sortCol: string | null, reverseSort?: boolean): SearchRow[] {
+		throw new Error("invalid sortcol");
+	}
+}
+
+class BattleLocationSearch extends BattleTypedSearch<'move'> {
+	sortRow: SearchRow = ['sortmove', ''];
+	getTable() {
+		return BattleLocationdex;
+	}
+	getDefaultResults(): SearchRow[] {
+		let results: SearchRow[] = [];
+		results.push(['header', "Moves"]);
+		for (let id in BattleLocationdex) {
+			switch (id) {
+			case 'paleowave':
+				results.push(['header', "CAP moves"]);
+				break;
+			case 'magikarpsrevenge':
+				continue;
+			}
+			results.push(['location', id as ID]);
+		}
+		return results;
+	}
+	private moveIsNotUseless(id: ID, species: Species, moves: string[], set: PokemonSet | null) {
+		const dex = this.dex;
+
+		let abilityid: ID = set ? toID(set.ability) : '' as ID;
+		const itemid: ID = set ? toID(set.item) : '' as ID;
+
+		if (dex.gen === 1) {
+			// Usually not useless for Gen 1
+			if ([
+				'acidarmor', 'amnesia', 'barrier', 'bind', 'blizzard', 'clamp', 'confuseray', 'counter', 'firespin', 'growth', 'headbutt', 'hyperbeam', 'mirrormove', 'pinmissile', 'razorleaf', 'sing', 'slash', 'sludge', 'twineedle', 'wrap',
+			].includes(id)) {
+				return true;
+			}
+
+			// Usually useless for Gen 1
+			if ([
+				'disable', 'haze', 'leechseed', 'quickattack', 'roar', 'thunder', 'toxic', 'triattack', 'waterfall', 'whirlwind',
+			].includes(id)) {
+				return false;
+			}
+
+			// Not useless only when certain moves aren't present
+			switch (id) {
+			case 'bubblebeam': return (!moves.includes('surf') && !moves.includes('blizzard'));
+			case 'doubleedge': return !moves.includes('bodyslam');
+			case 'doublekick': return !moves.includes('submission');
+			case 'firepunch': return !moves.includes('fireblast');
+			case 'megadrain': return !moves.includes('razorleaf') && !moves.includes('surf');
+			case 'megakick': return !moves.includes('hyperbeam');
+			case 'reflect': return !moves.includes('barrier') && !moves.includes('acidarmor');
+			case 'stomp': return !moves.includes('headbutt');
+			case 'submission': return !moves.includes('highjumpkick');
+			case 'thunderpunch': return !moves.includes('thunderbolt');
+			case 'triattack': return !moves.includes('bodyslam');
+			}
+			// Useful and Useless moves for Stadium OU, which changes many game mechanics.
+			if (this.formatType === 'stadium') {
+				if (['doubleedge', 'focusenergy', 'haze'].includes(id)) return true;
+				if (['hyperbeam', 'sing', 'hypnosis'].includes(id)) return false;
+				switch (id) {
+				case 'fly': return !moves.includes('drillpeck');
+				case 'dig': return !moves.includes('earthquake');
+				}
+			}
+		}
+
+		if (this.formatType === 'letsgo') {
+			if (['megadrain', 'teleport'].includes(id)) return true;
+		}
+
+		if (this.formatType === 'metronome') {
+			if (id === 'metronome') return true;
+		}
+
+		if (itemid === 'pidgeotite') abilityid = 'noguard' as ID;
+		if (itemid === 'blastoisinite') abilityid = 'megalauncher' as ID;
+		if (itemid === 'aerodactylite') abilityid = 'toughclaws' as ID;
+		if (itemid === 'glalitite') abilityid = 'refrigerate' as ID;
+
+		switch (id) {
+		case 'fakeout': case 'flamecharge': case 'nuzzle': case 'poweruppunch':
+			return abilityid !== 'sheerforce';
+		case 'solarbeam': case 'solarblade':
+			return ['desolateland', 'drought', 'chlorophyll', 'orichalcumpulse'].includes(abilityid) || itemid === 'powerherb';
+		case 'dynamicpunch': case 'grasswhistle': case 'inferno': case 'sing': case 'zapcannon':
+			return abilityid === 'noguard';
+		case 'heatcrash': case 'heavyslam':
+			return species.weightkg >= (species.evos ? 75 : 130);
+
+		case 'aerialace':
+			return ['technician', 'toughclaws'].includes(abilityid) && !moves.includes('bravebird');
+		case 'ancientpower':
+			return ['serenegrace', 'technician'].includes(abilityid) || !moves.includes('powergem');
+		case 'aquajet':
+			return !moves.includes('jetpunch');
+		case 'aurawheel':
+			return species.baseSpecies === 'Morpeko';
+		case 'axekick':
+			return !moves.includes('highjumpkick');
+		case 'bellydrum':
+			return moves.includes('aquajet') || moves.includes('jetpunch') || moves.includes('extremespeed') ||
+				['iceface', 'unburden'].includes(abilityid);
+		case 'bulletseed':
+			return ['skilllink', 'technician'].includes(abilityid);
+		case 'chillingwater':
+			return !moves.includes('scald');
+		case 'counter':
+			return species.baseStats.hp >= 65;
+		case 'darkvoid':
+			return dex.gen < 7;
+		case 'dualwingbeat':
+			return abilityid === 'technician' || !moves.includes('drillpeck');
+		case 'feint':
+			return abilityid === 'refrigerate';
+		case 'grassyglide':
+			return abilityid === 'grassysurge';
+		case 'gyroball':
+			return species.baseStats.spe <= 60;
+		case 'headbutt':
+			return abilityid === 'serenegrace';
+		case 'hex':
+			return !moves.includes('infernalparade');
+		case 'hiddenpowerelectric':
+			return (dex.gen < 4 && !moves.includes('thunderpunch')) && !moves.includes('thunderbolt');
+		case 'hiddenpowerfighting':
+			return (dex.gen < 4 && !moves.includes('brickbreak')) && !moves.includes('aurasphere') && !moves.includes('focusblast');
+		case 'hiddenpowerfire':
+			return (dex.gen < 4 && !moves.includes('firepunch')) && !moves.includes('flamethrower') &&
+				!moves.includes('mysticalfire') && !moves.includes('burningjealousy');
+		case 'hiddenpowergrass':
+			return !moves.includes('energyball') && !moves.includes('grassknot') && !moves.includes('gigadrain');
+		case 'hiddenpowerice':
+			return !moves.includes('icebeam') && (dex.gen < 4 && !moves.includes('icepunch')) ||
+				(dex.gen > 5 && !moves.includes('aurorabeam') && !moves.includes('glaciate'));
+		case 'hiddenpowerflying':
+			return dex.gen < 4 && !moves.includes('drillpeck');
+		case 'hiddenpowerbug':
+			return dex.gen < 4 && !moves.includes('megahorn');
+		case 'hiddenpowerpsychic':
+			return species.baseSpecies === 'Unown';
+		case 'hyperspacefury':
+			return species.id === 'hoopaunbound';
+		case 'hypnosis':
+			return (dex.gen < 4 && !moves.includes('sleeppowder')) || (dex.gen > 6 && abilityid === 'baddreams');
+		case 'icepunch':
+			return !moves.includes('icespinner') || ['sheerforce', 'ironfist'].includes(abilityid) || itemid === 'punchingglove';
+		case 'iciclecrash':
+			return !moves.includes('mountaingale');
+		case 'icywind':
+			// Keldeo needs Hidden Power for Electric/Ghost
+			return species.baseSpecies === 'Keldeo' || this.formatType === 'doubles';
+		case 'infestation':
+			return moves.includes('stickyweb');
+		case 'irondefense':
+			return !moves.includes('acidarmor');
+		case 'irontail':
+			return dex.gen > 5 && !moves.includes('ironhead') && !moves.includes('gunkshot') && !moves.includes('poisonjab');
+		case 'jumpkick':
+			return !moves.includes('highjumpkick') && !moves.includes('axekick');
+		case 'lastresort':
+			return set && set.moves.length < 3;
+		case 'leechlife':
+			return dex.gen > 6;
+		case 'mysticalfire':
+			return dex.gen > 6 && !moves.includes('flamethrower');
+		case 'naturepower':
+			return dex.gen === 5;
+		case 'nightslash':
+			return !moves.includes('crunch') && !(moves.includes('knockoff') && dex.gen >= 6);
+		case 'outrage':
+			return !moves.includes('glaiverush');
+		case 'petaldance':
+			return abilityid === 'owntempo';
+		case 'phantomforce':
+			return (!moves.includes('poltergeist') && !moves.includes('shadowclaw')) || this.formatType === 'doubles';
+		case 'poisonfang':
+			return species.types.includes('Poison') && !moves.includes('gunkshot') && !moves.includes('poisonjab');
+		case 'relicsong':
+			return species.id === 'meloetta';
+		case 'refresh':
+			return !moves.includes('aromatherapy') && !moves.includes('healbell');
+		case 'risingvoltage':
+			return abilityid === 'electricsurge' || abilityid === 'hadronengine';
+		case 'rocktomb':
+			return abilityid === 'technician';
+		case 'selfdestruct':
+			return dex.gen < 5 && !moves.includes('explosion');
+		case 'shadowpunch':
+			return abilityid === 'ironfist' && !moves.includes('ragefist');
+		case 'shelter':
+			return !moves.includes('acidarmor') && !moves.includes('irondefense');
+		case 'smackdown':
+			return species.types.includes('Ground');
+		case 'smartstrike':
+			return species.types.includes('Steel') && !moves.includes('ironhead');
+		case 'soak':
+			return abilityid === 'unaware';
+		case 'steelwing':
+			return !moves.includes('ironhead');
+		case 'stompingtantrum':
+			return (!moves.includes('earthquake') && !moves.includes('drillrun')) || this.formatType === 'doubles';
+		case 'stunspore':
+			return !moves.includes('thunderwave');
+		case 'technoblast':
+			return dex.gen > 5 && itemid.endsWith('drive') || itemid === 'dousedrive';
+		case 'teleport':
+			return dex.gen > 7;
+		case 'terrainpulse': case 'waterpulse':
+			return ['megalauncher', 'technician'].includes(abilityid) && !moves.includes('originpulse');
+		case 'toxicspikes':
+			return abilityid !== 'toxicdebris';
+		case 'trickroom':
+			return species.baseStats.spe <= 100;
+		}
+
+		if (this.formatType === 'doubles' && BattleMoveSearch.GOOD_DOUBLES_MOVES.includes(id)) {
+			return true;
+		}
+
+		const moveData = BattleLocationdex[id];
+		if (!moveData) return true;
+		if (moveData.category === 'Status') {
+			return BattleMoveSearch.GOOD_STATUS_MOVES.includes(id);
+		}
+		if (moveData.basePower < 75) {
+			return BattleMoveSearch.GOOD_WEAK_MOVES.includes(id);
+		}
+		if (id === 'skydrop') return true;
+		// strong moves
+		if (moveData.flags?.charge) {
+			return itemid === 'powerherb';
+		}
+		if (moveData.flags?.recharge) {
+			return false;
+		}
+		if (moveData.flags?.slicing && abilityid === 'sharpness') {
+			return true;
+		}
+		return !BattleMoveSearch.BAD_STRONG_MOVES.includes(id);
+	}
+	static readonly GOOD_STATUS_MOVES = [
+		'acidarmor', 'agility', 'aromatherapy', 'auroraveil', 'autotomize', 'banefulbunker', 'batonpass', 'bellydrum', 'bulkup', 'calmmind', 'chillyreception', 'clangoroussoul', 'coil', 'cottonguard', 'courtchange', 'curse', 'defog', 'destinybond', 'detect', 'disable', 'dragondance', 'encore', 'extremeevoboost', 'filletaway', 'geomancy', 'glare', 'haze', 'healbell', 'healingwish', 'healorder', 'heartswap', 'honeclaws', 'kingsshield', 'leechseed', 'lightscreen', 'lovelykiss', 'lunardance', 'magiccoat', 'maxguard', 'memento', 'milkdrink', 'moonlight', 'morningsun', 'nastyplot', 'naturesmadness', 'noretreat', 'obstruct', 'painsplit', 'partingshot', 'perishsong', 'protect', 'quiverdance', 'recover', 'reflect', 'reflecttype', 'rest', 'revivalblessing', 'roar', 'rockpolish', 'roost', 'shedtail', 'shellsmash', 'shiftgear', 'shoreup', 'silktrap', 'slackoff', 'sleeppowder', 'sleeptalk', 'softboiled', 'spikes', 'spikyshield', 'spore', 'stealthrock', 'stickyweb', 'strengthsap', 'substitute', 'switcheroo', 'swordsdance', 'synthesis', 'tailglow', 'tailwind', 'taunt', 'thunderwave', 'tidyup', 'toxic', 'transform', 'trick', 'victorydance', 'whirlwind', 'willowisp', 'wish', 'yawn',
+	] as ID[] as readonly ID[];
+	static readonly GOOD_WEAK_MOVES = [
+		'accelerock', 'acrobatics', 'aquacutter', 'avalanche', 'barbbarrage', 'bonemerang', 'bouncybubble', 'bulletpunch', 'buzzybuzz', 'ceaselessedge', 'circlethrow', 'clearsmog', 'doubleironbash', 'dragondarts', 'dragontail', 'drainingkiss', 'endeavor', 'facade', 'firefang', 'flipturn', 'flowertrick', 'freezedry', 'frustration', 'geargrind', 'grassknot', 'gyroball', 'icefang', 'iceshard', 'iciclespear', 'infernalparade', 'knockoff', 'lastrespects', 'lowkick', 'machpunch', 'mortalspin', 'mysticalpower', 'naturesmadness', 'nightshade', 'nuzzle', 'pikapapow', 'populationbomb', 'psychocut', 'psyshieldbash', 'pursuit', 'quickattack', 'ragefist', 'rapidspin', 'return', 'rockblast', 'ruination', 'saltcure', 'scorchingsands', 'seismictoss', 'shadowclaw', 'shadowsneak', 'sizzlyslide', 'stoneaxe', 'storedpower', 'stormthrow', 'suckerpunch', 'superfang', 'surgingstrikes', 'tailslap', 'trailblaze', 'tripleaxel', 'tripledive', 'twinbeam', 'uturn', 'veeveevolley', 'voltswitch', 'watershuriken', 'weatherball',
+	] as ID[] as readonly ID[];
+	static readonly BAD_STRONG_MOVES = [
+		'belch', 'burnup', 'crushclaw', 'dragonrush', 'dreameater', 'eggbomb', 'firepledge', 'flyingpress', 'grasspledge', 'hyperbeam', 'hyperfang', 'hyperspacehole', 'jawlock', 'landswrath', 'megakick', 'megapunch', 'mistyexplosion', 'muddywater', 'nightdaze', 'pollenpuff', 'rockclimb', 'selfdestruct', 'shelltrap', 'skyuppercut', 'slam', 'strength', 'submission', 'synchronoise', 'takedown', 'thrash', 'uproar', 'waterpledge',
+	] as ID[] as readonly ID[];
+	static readonly GOOD_DOUBLES_MOVES = [
+		'allyswitch', 'bulldoze', 'coaching', 'electroweb', 'faketears', 'fling', 'followme', 'healpulse', 'helpinghand', 'junglehealing', 'lifedew', 'lunarblessing', 'muddywater', 'pollenpuff', 'psychup', 'ragepowder', 'safeguard', 'skillswap', 'snipeshot', 'wideguard',
+	] as ID[] as readonly ID[];
+	getBaseResults() {
+		if (!this.species) return this.getDefaultResults();
+		const dex = this.dex;
+		let species = dex.species.get(this.species);
+		const format = this.format;
+		const isHackmons = (format.includes('hackmons') || format.endsWith('bh'));
+		const isSTABmons = (format.includes('stabmons') || format === 'staaabmons');
+		const isTradebacks = format.includes('tradebacks');
+		const regionBornLegality = dex.gen >= 6 &&
+			/^battle(spot|stadium|festival)/.test(format) || format.startsWith('vgc') ||
+			(dex.gen === 9 && this.formatType !== 'natdex');
+
+		let learnsetid = this.firstLearnsetid(species.id);
+		let moves: string[] = [];
+		let sketchMoves: string[] = [];
+		let sketch = false;
+		let gen = '' + dex.gen;
+		let lsetTable = BattleTeambuilderTable;
+		if (this.formatType?.startsWith('bdsp')) lsetTable = lsetTable['gen8bdsp'];
+		if (this.formatType === 'letsgo') lsetTable = lsetTable['gen7letsgo'];
+		if (this.formatType?.startsWith('dlc1')) lsetTable = lsetTable['gen8dlc1'];
+		while (learnsetid) {
+			let learnset = lsetTable.learnsets[learnsetid];
+			if (learnset) {
+				for (let moveid in learnset) {
+					let learnsetEntry = learnset[moveid];
+					const move = dex.moves.get(moveid);
+					const minGenCode: {[gen: number]: string} = {6: 'p', 7: 'q', 8: 'g', 9: 'a'};
+					if (regionBornLegality && !learnsetEntry.includes(minGenCode[dex.gen])) {
+						continue;
+					}
+					if (
+						!learnsetEntry.includes(gen) &&
+						(!isTradebacks ? true : !(move.gen <= dex.gen && learnsetEntry.includes('' + (dex.gen + 1))))
+					) {
+						continue;
+					}
+					if (this.formatType !== 'natdex' && move.isNonstandard === "Past") {
+						continue;
+					}
+					if (
+						this.formatType?.startsWith('dlc1') &&
+						BattleTeambuilderTable['gen8dlc1']?.nonstandardMoves.includes(moveid)
+					) {
+						continue;
+					}
+					if (moves.includes(moveid)) continue;
+					moves.push(moveid);
+					if (moveid === 'sketch') sketch = true;
+					if (moveid === 'hiddenpower') {
+						moves.push(
+							'hiddenpowerbug', 'hiddenpowerdark', 'hiddenpowerdragon', 'hiddenpowerelectric', 'hiddenpowerfighting', 'hiddenpowerfire', 'hiddenpowerflying', 'hiddenpowerghost', 'hiddenpowergrass', 'hiddenpowerground', 'hiddenpowerice', 'hiddenpowerpoison', 'hiddenpowerpsychic', 'hiddenpowerrock', 'hiddenpowersteel', 'hiddenpowerwater'
+						);
+					}
+				}
+			}
+			learnsetid = this.nextLearnsetid(learnsetid, species.id);
+		}
+		if (sketch || isHackmons) {
+			if (isHackmons) moves = [];
+			for (let id in BattleLocationdex) {
+				if (!format.startsWith('cap') && (id === 'paleowave' || id === 'shadowstrike')) continue;
+				const move = dex.moves.get(id);
+				if (move.gen > dex.gen) continue;
+				if (sketch) {
+					if (move.noSketch || move.isMax || move.isZ) continue;
+					if (move.isNonstandard && move.isNonstandard !== 'Past') continue;
+					if (move.isNonstandard === 'Past' && this.formatType !== 'natdex') continue;
+					sketchMoves.push(move.id);
+				} else {
+					if (!(dex.gen < 8 || this.formatType === 'natdex') && move.isZ) continue;
+					if (typeof move.isMax === 'string') continue;
+					if (move.isMax && dex.gen > 8) continue;
+					if (move.isNonstandard === 'Past' && this.formatType !== 'natdex') continue;
+					if (move.isNonstandard === 'LGPE' && this.formatType !== 'letsgo') continue;
+					moves.push(move.id);
+				}
+			}
+		}
+		if (this.formatType === 'metronome') moves = ['metronome'];
+		if (isSTABmons) {
+			for (let id in this.getTable()) {
+				const move = dex.moves.get(id);
+				if (moves.includes(move.id)) continue;
+				if (move.gen > dex.gen) continue;
+				if (move.isZ || move.isMax || (move.isNonstandard && move.isNonstandard !== 'Unobtainable')) continue;
+
+				const speciesTypes: string[] = [];
+				const moveTypes: string[] = [];
+				for (let i = dex.gen; i >= species.gen && i >= move.gen; i--) {
+					const genDex = Dex.forGen(i);
+					moveTypes.push(genDex.moves.get(move.name).type);
+
+					const pokemon = genDex.species.get(species.name);
+					let baseSpecies = genDex.species.get(pokemon.changesFrom || pokemon.name);
+					if (!pokemon.battleOnly) speciesTypes.push(...pokemon.types);
+					let prevo = pokemon.prevo;
+					while (prevo) {
+						const prevoSpecies = genDex.species.get(prevo);
+						speciesTypes.push(...prevoSpecies.types);
+						prevo = prevoSpecies.prevo;
+					}
+					if (pokemon.battleOnly && typeof pokemon.battleOnly === 'string') {
+						species = dex.species.get(pokemon.battleOnly);
+					}
+					const excludedForme = (s: Species) => [
+						'Alola', 'Alola-Totem', 'Galar', 'Galar-Zen', 'Hisui', 'Paldea', 'Paldea-Combat', 'Paldea-Blaze', 'Paldea-Aqua',
+					].includes(s.forme);
+					if (baseSpecies.otherFormes && !['Wormadam', 'Urshifu'].includes(baseSpecies.baseSpecies)) {
+						if (!excludedForme(species)) speciesTypes.push(...baseSpecies.types);
+						for (const formeName of baseSpecies.otherFormes) {
+							const forme = dex.species.get(formeName);
+							if (!forme.battleOnly && !excludedForme(forme)) speciesTypes.push(...forme.types);
+						}
+					}
+				}
+				let valid = false;
+				for (let type of moveTypes) {
+					if (speciesTypes.includes(type)) {
+						valid = true;
+						break;
+					}
+				}
+				if (valid) moves.push(id);
+			}
+		}
+
+		moves.sort();
+		sketchMoves.sort();
+
+		let usableMoves: SearchRow[] = [];
+		let uselessMoves: SearchRow[] = [];
+		for (const id of moves) {
+			const isUsable = this.moveIsNotUseless(id as ID, species, moves, this.set);
+			if (isUsable) {
+				if (!usableMoves.length) usableMoves.push(['header', "Moves"]);
+				usableMoves.push(['move', id as ID]);
+			} else {
+				if (!uselessMoves.length) uselessMoves.push(['header', "Usually useless moves"]);
+				uselessMoves.push(['move', id as ID]);
+			}
+		}
+		if (sketchMoves.length) {
+			usableMoves.push(['header', "Sketched moves"]);
+			uselessMoves.push(['header', "Useless sketched moves"]);
+		}
+		for (const id of sketchMoves) {
+			const isUsable = this.moveIsNotUseless(id as ID, species, sketchMoves, this.set);
+			if (isUsable) {
+				usableMoves.push(['move', id as ID]);
+			} else {
+				uselessMoves.push(['move', id as ID]);
+			}
+		}
+		return [...usableMoves, ...uselessMoves];
+	}
+	filter(row: SearchRow, filters: string[][]) {
+		console.log("test1");
+		if (!filters) return true;
+		console.log("test2");
+		if (row[0] !== 'location') return true;
+		console.log("test3");
+		const location = BattleLocationdex[row[1]];
+		console.log("type: " +  typeof location);
+		for (const [filterType, value] of filters) {
+			switch (filterType) {
+			case 'pokemon':
+				if (!this.isHere(value as ID, location)) return false;
+				break;
+			}
+		}
+		return true;
+	}
+	sort(results: SearchRow[], sortCol: string, reverseSort?: boolean): SearchRow[] {
+		const sortOrder = reverseSort ? -1 : 1;
+		switch (sortCol) {
+		case 'power':
+			let powerTable: {[id: string]: number | undefined} = {
+				return: 102, frustration: 102, spitup: 300, trumpcard: 200, naturalgift: 80, grassknot: 120,
+				lowkick: 120, gyroball: 150, electroball: 150, flail: 200, reversal: 200, present: 120,
+				wringout: 120, crushgrip: 120, heatcrash: 120, heavyslam: 120, fling: 130, magnitude: 150,
+				beatup: 24, punishment: 1020, psywave: 1250, nightshade: 1200, seismictoss: 1200,
+				dragonrage: 1140, sonicboom: 1120, superfang: 1350, endeavor: 1399, sheercold: 1501,
+				fissure: 1500, horndrill: 1500, guillotine: 1500,
+			};
+			return results.sort(([rowType1, id1], [rowType2, id2]) => {
+				let move1 = this.dex.moves.get(id1);
+				let move2 = this.dex.moves.get(id2);
+				let pow1 = move1.basePower || powerTable[id1] || (move1.category === 'Status' ? -1 : 1400);
+				let pow2 = move2.basePower || powerTable[id2] || (move2.category === 'Status' ? -1 : 1400);
+				return (pow2 - pow1) * sortOrder;
+			});
+		case 'accuracy':
+			return results.sort(([rowType1, id1], [rowType2, id2]) => {
+				let accuracy1 = this.dex.moves.get(id1).accuracy || 0;
+				let accuracy2 = this.dex.moves.get(id2).accuracy || 0;
+				if (accuracy1 === true) accuracy1 = 101;
+				if (accuracy2 === true) accuracy2 = 101;
+				return (accuracy2 - accuracy1) * sortOrder;
+			});
+		case 'pp':
+			return results.sort(([rowType1, id1], [rowType2, id2]) => {
+				let pp1 = this.dex.moves.get(id1).pp || 0;
+				let pp2 = this.dex.moves.get(id2).pp || 0;
+				return (pp2 - pp1) * sortOrder;
+			});
+		case 'name':
+			return results.sort(([rowType1, id1], [rowType2, id2]) => {
+				const name1 = id1;
+				const name2 = id2;
+				return (name1 < name2 ? -1 : name1 > name2 ? 1 : 0) * sortOrder;
+			});
+		}
 		throw new Error("invalid sortcol");
 	}
 }
