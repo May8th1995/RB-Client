@@ -1,11 +1,10 @@
-Pokémon Showdown Client
+RBClient
 ========================================================================
 
-Navigation: [Website][1] | [Server repository][2] | **Client repository** | [Dex repository][3]
+The RBDex needs various different files built from this repository this is a repo that stores those changes.
+The build is similar to below but this not intended to actually be used as a showdown client but instead to generate data files.
 
-  [1]: http://pokemonshowdown.com/
-  [2]: https://github.com/Zarel/Pokemon-Showdown
-  [3]: https://github.com/Zarel/Pokemon-Showdown-Dex
+Navigation: **Client repository** | [Dex repository](https://github.com/May8th1995/RBDex)
 
 Introduction
 ------------------------------------------------------------------------
