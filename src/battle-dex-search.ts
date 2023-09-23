@@ -159,7 +159,6 @@ class DexSearch {
 			this.results = null;
 			return true;
 		}
-		console.log("filter: " + this.typedSearch.searchType);
 		return false;
 	}
 
@@ -201,7 +200,6 @@ class DexSearch {
 	}
 
 	filterLabel(filterType: string) {
-		console.log("filter label");
 		if (this.typedSearch && this.typedSearch.searchType !== filterType) {
 			return 'Filter';
 		}
@@ -1683,13 +1681,9 @@ class BattleLocationSearch extends BattleTypedSearch<'move'> {
 		return [...usableMoves, ...uselessMoves];
 	}
 	filter(row: SearchRow, filters: string[][]) {
-		console.log("test1");
 		if (!filters) return true;
-		console.log("test2");
 		if (row[0] !== 'location') return true;
-		console.log("test3");
 		const location = BattleLocationdex[row[1]];
-		console.log("type: " +  typeof location);
 		for (const [filterType, value] of filters) {
 			switch (filterType) {
 			case 'pokemon':
