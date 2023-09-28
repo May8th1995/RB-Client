@@ -1272,7 +1272,7 @@ class BattleItemSearch extends BattleTypedSearch<'item'> {
 	}
 }
 
-class BattleLocationSearch extends BattleTypedSearch<'move'> {
+class BattleLocationSearch extends BattleTypedSearch<'location'> {
 	sortRow: SearchRow = ['sortmove', ''];
 	getTable() {
 		return BattleLocationdex;
