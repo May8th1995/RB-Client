@@ -374,7 +374,7 @@ class DexSearch {
 			// For move queries in the teambuilder, don't accept pokemon as filters
 			if (searchType === 'move' && illegal && typeIndex === 1) continue;
 			// For move queries in the teambuilder, only accept pokemon as filters
-			if (searchType === 'location' && illegal && typeIndex != 1) continue;
+			if (searchType === 'location' && illegal && typeIndex != 1 && typeIndex != 10) continue;
 			// For ability/item queries, don't accept anything else as a filter
 			if ((searchType === 'ability' || searchType === 'item') && typeIndex !== searchTypeIndex) continue;
 			// Query was a type name followed 'type'; only show types
